@@ -41,7 +41,7 @@ const withPasswordRules = <T extends z.ZodType<{ password: string; confirm: stri
     .refine((d) => /[A-Za-z]/.test(d.password) && /[0-9]/.test(d.password), {
       path: ["password"],
       message: "Include a letter and a digit",
-    });
+    }) as unknown as z.ZodEffects<T, z.output<T>, z.input<T>>;
 
 export const setPasswordSchema = withPasswordRules(passwordObject);
 
