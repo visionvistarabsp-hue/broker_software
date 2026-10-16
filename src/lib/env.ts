@@ -35,7 +35,6 @@ export function getEnv(): Env {
   if (!cached) cached = parseEnv();
   return cached;
 }
-export const env = getEnv();
 
 export function assertOtpProviderUsable(): void {
   const parsed = getEnv();

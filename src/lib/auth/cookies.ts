@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { getEnv } from "@/lib/env";
 
-export const SESSION_COOKIE = getEnv().SESSION_COOKIE_NAME;
+export const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "broker_session";
 
 export function buildCookieOptions(expires: Date, nodeEnv: string) {
   return {
