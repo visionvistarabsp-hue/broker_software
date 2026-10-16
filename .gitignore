@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment
+.env
+.env*.local
+.env.production
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Prisma
+prisma/*.db
+
+# Misc
+.DS_Store
+*.log
+.vercel
+.turbo
