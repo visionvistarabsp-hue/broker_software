@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { registerSchema, verifyOtpSchema, setPasswordSchema, loginSchema, resetConfirmSchema } from "@/lib/validation/auth";
 import { zodFieldErrors, actionError, type ActionResult } from "@/lib/validation/common";
-import { startRegistration, completeRegistration, finalizePassword } from "@/lib/services/registration";
+import { startRegistration, completeRegistration, consumePasswordSetupToken, finalizePassword } from "@/lib/services/registration";
 import {
   loginWithPassword, completeLoginOtp, logout, requestLoginOtp, requestPasswordReset, resetPassword,
 } from "@/lib/services/auth-flow";
@@ -22,7 +22,7 @@ export async function registerAction(formData: FormData): Promise<ActionResult<{
   return startRegistration(parsed.data);
 }
 
-export async function verifyOtpAction(formData: FormData): Promise<ActionResult<{ userId: string }>> {
+export async function verifyOtpAction(formData: FormData): Promise<ActionResult<{ token: string }>> {
   const parsed = verifyOtpSchema.safeParse({
     phone: formData.get("phone"),
     purpose: "REGISTER",
@@ -33,14 +33,15 @@ export async function verifyOtpAction(formData: FormData): Promise<ActionResult<
 }
 
 export async function setPasswordAction(formData: FormData): Promise<ActionResult<{ ok: true }>> {
-  const userId = String(formData.get("userId") ?? "");
   const parsed = setPasswordSchema.safeParse({
-    token: userId,
+    token: formData.get("token"),
     password: formData.get("password"),
     confirm: formData.get("confirm"),
   });
   if (!parsed.success) return actionError("Please fix the errors below.", zodFieldErrors(parsed.error));
-  const res = await finalizePassword(userId, parsed.data.password);
+  const setup = await consumePasswordSetupToken(parsed.data.token);
+  if (!setup) return actionError("This setup link is invalid or has expired.");
+  const res = await finalizePassword(setup.userId, parsed.data.password);
   if (!res.ok) return res;
   await setSessionCookie(res.data.token, res.data.expiresAt);
   return { ok: true, data: { ok: true } };

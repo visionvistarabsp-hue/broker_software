@@ -20,7 +20,7 @@ export function VerifyForm({ phone }: { phone: string }) {
         start(async () => {
           fd.set("phone", phone);
           const res = await verifyOtpAction(fd);
-          if (res.ok) router.push(`/set-password?userId=${encodeURIComponent(res.data.userId)}`);
+          if (res.ok) router.push(`/set-password?token=${encodeURIComponent(res.data.token)}`);
           else setError(res.error);
         })
       }

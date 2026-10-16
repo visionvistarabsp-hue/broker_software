@@ -44,8 +44,23 @@ model User {
   brokerProfile  BrokerProfile?
   sessions       Session[]
   otpChallenges  OtpChallenge[]
+  passwordSetupTokens PasswordSetupToken[]
 
   @@index([role, status])
+}
+
+model PasswordSetupToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model BrokerProfile {

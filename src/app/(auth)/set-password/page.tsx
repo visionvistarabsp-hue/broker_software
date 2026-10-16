@@ -1,6 +1,6 @@
 import { SetPasswordForm } from "@/components/forms/set-password-form";
 
-export default async function SetPasswordPage({ searchParams }: { searchParams: Promise<{ userId?: string }> }) {
-  const { userId } = await searchParams;
-  return <SetPasswordForm userId={userId ?? ""} />;
+export default async function SetPasswordPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
+  const { token } = await searchParams;
+  return <SetPasswordForm token={token ?? ""} />;
 }

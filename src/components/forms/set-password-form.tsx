@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 
-export function SetPasswordForm({ userId }: { userId: string }) {
+export function SetPasswordForm({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -18,7 +18,7 @@ export function SetPasswordForm({ userId }: { userId: string }) {
       className="space-y-4"
       action={(fd) =>
         start(async () => {
-          fd.set("userId", userId);
+          fd.set("token", token);
           const res = await setPasswordAction(fd);
           if (res.ok) router.push("/dashboard");
           else setError(res.error);
