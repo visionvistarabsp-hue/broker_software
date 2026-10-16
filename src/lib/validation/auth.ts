@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { normalizePhone } from "@/lib/services/phone";
 
-const phoneField = z
+export const normalizedPhoneField = z
   .string()
   .min(1, "Phone number is required")
   .transform((v, ctx) => {
@@ -15,7 +15,7 @@ const phoneField = z
 
 export const registerSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
-  phone: phoneField,
+  phone: normalizedPhoneField,
   email: z.union([z.string().email(), z.literal("")]).optional(),
   role: z.enum(["MAIN_BROKER", "REFERRAL_BROKER"]),
   consent: z.literal(true, { errorMap: () => ({ message: "Consent is required" }) }),
@@ -30,7 +30,7 @@ export const verifyOtpSchema = z.object({
 });
 
 const passwordObject = z.object({
-  token: z.string().min(1).optional(),
+  token: z.string().min(1),
   password: z.string().min(10, "At least 10 characters"),
   confirm: z.string().min(1),
 });
@@ -50,9 +50,9 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const otpLoginRequestSchema = z.object({ phone: phoneField });
+export const otpLoginRequestSchema = z.object({ phone: normalizedPhoneField });
 
-export const resetRequestSchema = z.object({ phone: phoneField });
+export const resetRequestSchema = z.object({ phone: normalizedPhoneField });
 
 export const resetConfirmSchema = withPasswordRules(
   passwordObject.omit({ token: true }).extend({

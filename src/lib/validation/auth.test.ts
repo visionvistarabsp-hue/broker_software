@@ -19,8 +19,8 @@ describe("validation", () => {
   });
 
   it("setPasswordSchema enforces policy", () => {
-    expect(setPasswordSchema.safeParse({ password: "short", confirm: "short" }).success).toBe(false);
-    expect(setPasswordSchema.safeParse({ password: "Str0ngPassw0rd", confirm: "Str0ngPassw0rd" }).success).toBe(true);
+    expect(setPasswordSchema.safeParse({ token: "u1", password: "short", confirm: "short" }).success).toBe(false);
+    expect(setPasswordSchema.safeParse({ token: "u1", password: "Str0ngPassw0rd", confirm: "Str0ngPassw0rd" }).success).toBe(true);
   });
 
   it("loginSchema accepts identifier + password", () => {
