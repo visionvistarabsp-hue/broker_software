@@ -9,10 +9,17 @@ out/
 build/
 dist/
 
+# TypeScript (auto-generated)
+*.tsbuildinfo
+next-env.d.ts
+
 # Environment
 .env
 .env*.local
 .env.production
+
+# Local compose port overrides (environment-specific)
+docker-compose.override.yml
 
 # Testing
 coverage/
