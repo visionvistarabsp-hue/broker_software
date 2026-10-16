@@ -9,6 +9,10 @@ out/
 build/
 dist/
 
+# TypeScript (auto-generated)
+*.tsbuildinfo
+next-env.d.ts
+
 # Environment
 .env
 .env*.local
