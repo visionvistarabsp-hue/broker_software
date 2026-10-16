@@ -22,6 +22,9 @@ test-results/
 # Prisma
 prisma/*.db
 
+# Worktrees
+.worktrees/
+
 # Misc
 .DS_Store
 *.log
