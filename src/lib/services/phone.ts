@@ -9,7 +9,17 @@ export function normalizePhone(input: string, defaultRegion: CountryCode = "IN")
 }
 
 export function maskPhone(e164: string): string {
-  if (e164.length <= 6) return "•".repeat(e164.length);
+  if (e164.length <= 4) return "•".repeat(e164.length);
+  if (e164.length <= 6) {
+    const tail = e164.slice(-4);
+    const dots = "•".repeat(e164.length - 4);
+    return `${dots}${tail}`;
+  }
+  if (e164.length <= 10) {
+    const tail = e164.slice(-4);
+    const dots = "•".repeat(e164.length - 4);
+    return `${dots}${tail}`;
+  }
   const head = e164.slice(0, e164.length - 10);
   const tail = e164.slice(-4);
   const dots = "•".repeat(Math.max(0, e164.length - head.length - tail.length));

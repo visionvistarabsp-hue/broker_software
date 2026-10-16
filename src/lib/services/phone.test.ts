@@ -21,4 +21,7 @@ describe("maskPhone", () => {
   it("masks the middle digits", () => {
     expect(maskPhone("+919876543210")).toBe("+91••••••3210");
   });
+  it("masks short inputs", () => {
+    expect(maskPhone("12345678")).toBe("••••5678");
+  });
 });

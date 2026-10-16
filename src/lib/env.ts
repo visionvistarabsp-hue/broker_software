@@ -28,8 +28,18 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
 }
 
 let cached: Env | undefined;
+export function resetEnvCache() {
+  cached = undefined;
+}
 export function getEnv(): Env {
   if (!cached) cached = parseEnv();
   return cached;
 }
 export const env = getEnv();
+
+export function assertOtpProviderUsable(): void {
+  const parsed = getEnv();
+  if (parsed.NODE_ENV === "production" && parsed.OTP_PROVIDER === "console") {
+    throw new Error("OTP_PROVIDER=console is not allowed in production; configure SMTP.");
+  }
+}

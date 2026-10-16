@@ -34,3 +34,35 @@ describe("parseEnv", () => {
     ).toThrow();
   });
 });
+
+describe("assertOtpProviderUsable", () => {
+  const baseEnv = {
+    DATABASE_URL: "postgresql://x:y@localhost:5432/z",
+    APP_URL: "http://localhost:3000",
+    SESSION_COOKIE_NAME: "broker_session",
+    SESSION_TTL_HOURS: "720",
+    OTP_TTL_MINUTES: "10",
+    OTP_MAX_ATTEMPTS: "5",
+    OTP_PROVIDER: "console",
+    SMTP_URL: "",
+    SMTP_FROM: "no-reply@example.com",
+  } as unknown as NodeJS.ProcessEnv;
+
+  it("throws when NODE_ENV=production + OTP_PROVIDER=console", async () => {
+    const { assertOtpProviderUsable, resetEnvCache } = await import("./env");
+    const prev = { ...process.env };
+    process.env = { ...process.env, ...baseEnv, NODE_ENV: "production", OTP_PROVIDER: "console" } as NodeJS.ProcessEnv;
+    resetEnvCache();
+    expect(() => assertOtpProviderUsable()).toThrow("OTP_PROVIDER=console is not allowed in production; configure SMTP.");
+    process.env = prev;
+  });
+
+  it("does not throw for default/console-dev config", async () => {
+    const { assertOtpProviderUsable, resetEnvCache } = await import("./env");
+    const prev = { ...process.env };
+    process.env = { ...process.env, ...baseEnv, NODE_ENV: "development", OTP_PROVIDER: "console" } as NodeJS.ProcessEnv;
+    resetEnvCache();
+    expect(() => assertOtpProviderUsable()).not.toThrow();
+    process.env = prev;
+  });
+});
