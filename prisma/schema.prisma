@@ -94,3 +94,16 @@ model OtpChallenge {
   @@index([phone, purpose])
   @@index([expiresAt])
 }
+
+model PendingRegistration {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  fullName    String
+  email       String?
+  role        Role
+  consentAt   DateTime
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt])
+}
