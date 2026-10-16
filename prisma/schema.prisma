@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MAIN_BROKER
+  REFERRAL_BROKER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum OtpPurpose {
+  REGISTER
+  LOGIN
+  RESET
+}
+
+model User {
+  id              String        @id @default(cuid())
+  email           String?       @unique
+  phoneOriginal   String
+  phoneNormalized String        @unique
+  passwordHash    String?
+  role            Role
+  status          UserStatus    @default(PENDING)
+  phoneVerifiedAt DateTime?
+  emailVerifiedAt DateTime?
+  consentAt       DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  brokerProfile  BrokerProfile?
+  sessions       Session[]
+  otpChallenges  OtpChallenge[]
+
+  @@index([role, status])
+}
+
+model BrokerProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  brokerCode String   @unique
+  fullName   String
+  city       String?
+  company    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  userId        String
+  tokenHash     String   @unique
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  rotatedFromId String?
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model OtpChallenge {
+  id           String     @id @default(cuid())
+  userId       String?
+  phone        String
+  purpose      OtpPurpose
+  codeHash     String
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  attemptCount Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone, purpose])
+  @@index([expiresAt])
+}

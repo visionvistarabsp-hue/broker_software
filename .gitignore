@@ -18,6 +18,9 @@ next-env.d.ts
 .env*.local
 .env.production
 
+# Local compose port overrides (environment-specific)
+docker-compose.override.yml
+
 # Testing
 coverage/
 playwright-report/
