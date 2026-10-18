@@ -25,7 +25,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const links = NAV.filter((n) => (n.roles as readonly string[]).includes(user.role));
-  const [count, recent] = await Promise.all([unreadCount(user), listNotifications(user, { take: 8 })]);
+  const [count, recent] =
+    user.status === "ACTIVE"
+      ? await Promise.all([unreadCount(user), listNotifications(user, { take: 8 })])
+      : [0, []];
   return (
     <div className="flex min-h-screen bg-slate-50">
       <nav className="hidden w-64 shrink-0 border-r bg-white md:flex md:flex-col">

@@ -18,7 +18,7 @@ function scopeNotificationWhere(actor: SessionUser): Record<string, unknown> {
 }
 
 export async function unreadCount(actor: SessionUser): Promise<number> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  if (actor.status !== "ACTIVE") return 0;
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
 
   return prisma.notification.count({
@@ -30,7 +30,7 @@ export async function listNotifications(
   actor: SessionUser,
   opts?: { unreadOnly?: boolean; take?: number },
 ): Promise<NotificationRow[]> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  if (actor.status !== "ACTIVE") return [];
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
 
   const where: Record<string, unknown> = { ...scopeNotificationWhere(actor) };
