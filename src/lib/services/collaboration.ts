@@ -141,7 +141,8 @@ export async function removeCollaborator(
  * admins, and the collaborators themselves.
  */
 export async function listCollaborators(actor: SessionUser, leadId: string): Promise<CollaboratorRow[]> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active.");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty list instead of crashing.
+  if (actor.status !== "ACTIVE") return [];
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
 
   if (!(await canManageLead(actor, leadId))) {

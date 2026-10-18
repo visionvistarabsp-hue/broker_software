@@ -157,7 +157,8 @@ export async function listCommissionRules(
   actor: SessionUser,
   opts?: { activeOnly?: boolean },
 ): Promise<CommissionRuleRow[]> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty list instead of crashing.
+  if (actor.status !== "ACTIVE") return [];
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER"]);
 
   const where: Record<string, unknown> = {};
@@ -236,7 +237,8 @@ export async function createCommissionRule(
 }
 
 export async function listCommissions(actor: SessionUser): Promise<CommissionRow[]> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty list instead of crashing.
+  if (actor.status !== "ACTIVE") return [];
 
   const scope = commissionScope(actor);
 
@@ -271,7 +273,8 @@ export async function listCommissions(actor: SessionUser): Promise<CommissionRow
 }
 
 export async function getCommission(actor: SessionUser, id: string): Promise<CommissionRow | null> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return null instead of crashing.
+  if (actor.status !== "ACTIVE") return null;
 
   const scope = commissionScope(actor);
 
@@ -379,7 +382,8 @@ export async function createCommission(
 }
 
 export async function listPayouts(actor: SessionUser): Promise<PayoutRow[]> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty list instead of crashing.
+  if (actor.status !== "ACTIVE") return [];
 
   const scope = payoutScope(actor);
 
@@ -417,7 +421,8 @@ export async function listPayouts(actor: SessionUser): Promise<PayoutRow[]> {
 }
 
 export async function getPayout(actor: SessionUser, id: string): Promise<PayoutRow | null> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return null instead of crashing.
+  if (actor.status !== "ACTIVE") return null;
 
   const scope = payoutScope(actor);
 

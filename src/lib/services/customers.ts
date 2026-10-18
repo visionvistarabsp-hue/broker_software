@@ -13,7 +13,12 @@ export async function listCustomers(
   actor: SessionUser,
   opts?: { q?: string; page?: number; pageSize?: number }
 ) {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty page instead of crashing.
+  if (actor.status !== "ACTIVE") {
+    const page = Math.max(1, opts?.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 20));
+    return { total: 0, page, pageSize, rows: [] };
+  }
   const q = (opts?.q ?? "").trim();
   const page = Math.max(1, opts?.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 20));

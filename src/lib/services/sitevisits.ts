@@ -31,7 +31,8 @@ export async function listSiteVisits(
   actor: SessionUser,
   opts?: { from?: Date; to?: Date },
 ): Promise<SiteVisitRow[]> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse; return empty rather than crash.
+  if (actor.status !== "ACTIVE") return [];
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
 
   const where: Record<string, unknown> = { ...scopeSiteVisitWhere(actor) };

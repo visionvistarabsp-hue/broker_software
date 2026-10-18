@@ -21,7 +21,12 @@ export async function listProperties(
   actor: SessionUser,
   opts?: { q?: string; city?: string; listingType?: string; status?: string; page?: number; pageSize?: number }
 ) {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty page instead of crashing.
+  if (actor.status !== "ACTIVE") {
+    const page = Math.max(1, opts?.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 20));
+    return { total: 0, page, pageSize, rows: [] };
+  }
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
   const q = (opts?.q ?? "").trim();
   const page = Math.max(1, opts?.page ?? 1);
@@ -43,7 +48,8 @@ export async function listProperties(
 }
 
 export async function activePropertiesForLead(actor: SessionUser) {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty list instead of crashing.
+  if (actor.status !== "ACTIVE") return [];
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
   return prisma.property.findMany({
     where: { status: "ACTIVE" },
@@ -100,7 +106,8 @@ export async function setPropertyStatus(actor: SessionUser, id: string, status: 
 }
 
 export async function activePropertiesForMatching(actor: SessionUser) {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty list instead of crashing.
+  if (actor.status !== "ACTIVE") return [];
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
   return prisma.property.findMany({
     where: { status: "ACTIVE" },

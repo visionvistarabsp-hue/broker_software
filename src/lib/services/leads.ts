@@ -7,11 +7,13 @@ import { writeAudit } from "@/lib/services/audit";
 import type { LeadStatus } from "@prisma/client";
 
 export async function listLeads(actor: SessionUser, opts?: { q?: string; status?: string; page?: number; pageSize?: number }) {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
-  const q = (opts?.q ?? "").trim();
   const page = Math.max(1, opts?.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 20));
+  // PENDING (not yet approved) brokers have no lead activity to show; return an
+  // empty page instead of throwing so the app shell does not crash on load.
+  if (actor.status !== "ACTIVE") return { total: 0, page, pageSize, rows: [] };
+  const q = (opts?.q ?? "").trim();
   const scope = actor.role === "ADMIN" ? {} : { OR: [{ submittedById: actor.id }, { assignedToId: actor.id }, { collaborators: { some: { brokerId: actor.id } } }] };
   const where: Record<string, unknown> = { ...scope };
   if (opts?.status) where.status = opts.status as LeadStatus;
@@ -90,7 +92,8 @@ export async function submitLead(actor: SessionUser, raw: unknown): Promise<Acti
 }
 
 export async function getLead(actor: SessionUser, id: string) {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // READ: no status gate here — ownership checks below still apply, so a
+  // PENDING broker can only open leads they submitted/are assigned/collaborate on.
   const lead = await prisma.lead.findUnique({
     where: { id },
     include: {

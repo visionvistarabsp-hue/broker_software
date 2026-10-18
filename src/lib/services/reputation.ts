@@ -50,7 +50,14 @@ export function computeReputationScore(m: ReputationMetrics): ReputationScore {
 }
 
 export async function getReputation(actor: SessionUser, brokerId?: string): Promise<ReputationScore & { brokerId: string }> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active.");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return zeroed score instead of crashing.
+  if (actor.status !== "ACTIVE") {
+    return {
+      brokerId: brokerId ?? actor.id,
+      score: 0,
+      breakdown: { conversion: 0, followUps: 0, siteVisits: 0, volume: 0, payouts: 0 },
+    };
+  }
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
 
   const targetId = brokerId ?? actor.id;

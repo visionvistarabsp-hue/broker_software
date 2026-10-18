@@ -20,7 +20,10 @@ function customerScope(actor: SessionUser): Record<string, unknown> {
 }
 
 export async function exportLeadsCsv(actor: SessionUser): Promise<ExportResult> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty export instead of crashing.
+  if (actor.status !== "ACTIVE") {
+    return { kind: "lead", filename: `leads-export-${new Date().toISOString().slice(0, 10)}.csv`, csv: "", rowCount: 0 };
+  }
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
   const rows = await prisma.lead.findMany({
     where: leadScope(actor) as never,
@@ -225,7 +228,10 @@ export function parseCsvWithHeader(text: string): {
 }
 
 export async function exportPropertiesCsv(actor: SessionUser): Promise<ExportResult> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty export instead of crashing.
+  if (actor.status !== "ACTIVE") {
+    return { kind: "property", filename: `properties-export-${new Date().toISOString().slice(0, 10)}.csv`, csv: "", rowCount: 0 };
+  }
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
   const rows = await prisma.property.findMany({
     where: propertyScope(actor) as never,
@@ -294,7 +300,10 @@ export async function exportPropertiesCsv(actor: SessionUser): Promise<ExportRes
 }
 
 export async function exportCustomersCsv(actor: SessionUser): Promise<ExportResult> {
-  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  // Non-ACTIVE (e.g. PENDING) users may browse — return empty export instead of crashing.
+  if (actor.status !== "ACTIVE") {
+    return { kind: "customer", filename: `customers-export-${new Date().toISOString().slice(0, 10)}.csv`, csv: "", rowCount: 0 };
+  }
   requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
   const rows = await prisma.customer.findMany({
     where: customerScope(actor) as never,
