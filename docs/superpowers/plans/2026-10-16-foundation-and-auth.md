@@ -1488,9 +1488,9 @@ describe("canAccessLead", () => {
   it("other broker cannot access", () => expect(canAccessLead(brokerB, lead)).toBe(false));
   it("assigned broker can access", () =>
     expect(canAccessLead(brokerB, { ...lead, assignedToId: "b2" })).toBe(true));
-  it("referral broker cannot access others' lead (owner is a main broker)", () =>
+  it("referral partner cannot access others' lead (owner is a channel partner)", () =>
     expect(canAccessLead(referrer, lead)).toBe(false));
-  it("referral broker can access own referral", () =>
+  it("referral partner can access own referral", () =>
     expect(canAccessLead(referrer, { ...lead, submittedById: "r1" })).toBe(true));
 });
 
@@ -2385,8 +2385,8 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="role">I am registering as</Label>
         <select id="role" name="role" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-          <option value="MAIN_BROKER">Main Broker</option>
-          <option value="REFERRAL_BROKER">Referral Broker / Partner</option>
+          <option value="MAIN_BROKER">Channel Partner</option>
+          <option value="REFERRAL_BROKER">Referral Partner</option>
         </select>
       </div>
       <label className="flex items-start gap-2 text-sm">

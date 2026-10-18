@@ -12,7 +12,7 @@ export async function listLeads(actor: SessionUser, opts?: { q?: string; status?
   const q = (opts?.q ?? "").trim();
   const page = Math.max(1, opts?.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? 20));
-  const scope = actor.role === "ADMIN" ? {} : { OR: [{ submittedById: actor.id }, { assignedToId: actor.id }] };
+  const scope = actor.role === "ADMIN" ? {} : { OR: [{ submittedById: actor.id }, { assignedToId: actor.id }, { collaborators: { some: { brokerId: actor.id } } }] };
   const where: Record<string, unknown> = { ...scope };
   if (opts?.status) where.status = opts.status as LeadStatus;
   if (q) {
@@ -46,9 +46,12 @@ export async function submitLead(actor: SessionUser, raw: unknown): Promise<Acti
     if (!target || target.status !== "ACTIVE") return actionError("Assignee is not an active broker.");
     assignedToId = target.id;
   }
-  const existingCustomer = await prisma.customer.findFirst({ where: { phoneNormalized: input.customerPhone }, orderBy: { createdAt: "asc" } });
   const leadCode = await generateUniqueCode(async (c) => !!(await prisma.lead.findUnique({ where: { leadCode: c } })));
   const result = await prisma.$transaction(async (tx) => {
+    // Serialize submissions for the same normalized phone so concurrent
+    // requests cannot both create a customer or miss the duplicate review.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.customerPhone}))`;
+    const existingCustomer = await tx.customer.findFirst({ where: { phoneNormalized: input.customerPhone }, orderBy: { createdAt: "asc" } });
     let customerId: string;
     let duplicate = false;
     let candidateId: string | null = null;
@@ -98,7 +101,10 @@ export async function getLead(actor: SessionUser, id: string) {
   });
   if (!lead) throw new AuthError(404, "Lead not found");
   if (actor.role !== "ADMIN" && lead.submittedById !== actor.id && lead.assignedToId !== actor.id) {
-    throw new AuthError(403, "Forbidden");
+    const collab = await prisma.dealCollaborator.findUnique({
+      where: { leadId_brokerId: { leadId: id, brokerId: actor.id } },
+    });
+    if (!collab) throw new AuthError(403, "Forbidden");
   }
   return lead;
 }

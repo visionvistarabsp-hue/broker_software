@@ -11,37 +11,35 @@ import type { OtpPurpose } from "@prisma/client";
 const PENDING_TTL_MS = 30 * 60 * 1000;
 const SETUP_TTL_MS = 15 * 60 * 1000;
 
-export async function startRegistration(input: RegisterInput): Promise<ActionResult<{ phone: string }>> {
-  const existing = await prisma.user.findUnique({ where: { phoneNormalized: input.phone } });
-  if (existing) return actionError("An account with this phone number already exists.");
+export async function startRegistration(input: RegisterInput): Promise<ActionResult<{ email: string }>> {
+  const existing = await prisma.user.findUnique({ where: { email: input.email || undefined } });
+  if (existing) return actionError("An account with this email already exists.");
   await prisma.pendingRegistration.upsert({
-    where: { phone: input.phone },
+    where: { email: input.email || "" },
     create: {
-      phone: input.phone,
+      email: input.email || "",
       fullName: input.fullName,
-      email: input.email || null,
       role: input.role,
       consentAt: new Date(),
       expiresAt: new Date(Date.now() + PENDING_TTL_MS),
     },
     update: {
       fullName: input.fullName,
-      email: input.email || null,
       role: input.role,
       consentAt: new Date(),
       expiresAt: new Date(Date.now() + PENDING_TTL_MS),
     },
   });
   try {
-    await issueOtp(input.phone, "REGISTER");
+    await issueOtp(input.email || "", "REGISTER");
   } catch (e) {
     return actionError(e instanceof Error ? e.message : "Unable to send verification code.");
   }
-  return actionSuccess({ phone: input.phone });
+  return actionSuccess({ email: input.email || "" });
 }
 
 export interface CompleteRegistrationInput {
-  phone: string;
+  email: string;
   purpose: OtpPurpose;
   code: string;
 }
@@ -49,15 +47,15 @@ export interface CompleteRegistrationInput {
 export async function completeRegistration(
   input: CompleteRegistrationInput
 ): Promise<ActionResult<{ token: string }>> {
-  const pending = await prisma.pendingRegistration.findUnique({ where: { phone: input.phone } });
+  const pending = await prisma.pendingRegistration.findUnique({ where: { email: input.email } });
   if (!pending || pending.expiresAt.getTime() < Date.now()) {
     return actionError("Your registration session expired. Please start again.");
   }
-  const result = await verifyOtp(input.phone, input.purpose, input.code);
+  const result = await verifyOtp(input.email, input.purpose, input.code);
   if (!result.ok) return actionError("Invalid or expired verification code.");
 
-  const existing = await prisma.user.findUnique({ where: { phoneNormalized: input.phone } });
-  if (existing) return actionError("An account with this phone number already exists.");
+  const existing = await prisma.user.findUnique({ where: { email: input.email || undefined } });
+  if (existing) return actionError("An account with this email already exists.");
 
   const rawToken = randomBytes(32).toString("hex");
   const tokenHash = hashToken(rawToken);
@@ -69,12 +67,10 @@ export async function completeRegistration(
     );
     const created = await tx.user.create({
       data: {
-        phoneOriginal: input.phone,
-        phoneNormalized: input.phone,
-        email: pending.email,
+        email: input.email || null,
         role: pending.role,
         status: "PENDING",
-        phoneVerifiedAt: new Date(),
+        emailVerifiedAt: new Date(),
         consentAt: pending.consentAt,
       },
     });
@@ -84,7 +80,7 @@ export async function completeRegistration(
     await tx.passwordSetupToken.create({
       data: { tokenHash, userId: created.id, expiresAt },
     });
-    await tx.pendingRegistration.delete({ where: { phone: input.phone } });
+    await tx.pendingRegistration.delete({ where: { email: input.email } });
   });
 
   return actionSuccess({ token: rawToken });

@@ -55,7 +55,7 @@ export async function activePropertiesForLead(actor: SessionUser) {
 
 export async function createProperty(actor: SessionUser, raw: unknown): Promise<ActionResult<{ id: string; propertyCode: string }>> {
   if (actor.status !== "ACTIVE") return actionError("Account is not active.");
-  if (!canWrite(actor)) return actionError("Only admins and main brokers can manage properties.");
+  if (!canWrite(actor)) return actionError("Only admins and channel partners can manage properties.");
   const parsed = propertySchema.safeParse(raw);
   if (!parsed.success) return actionError("Please fix the errors below.", zodFieldErrors(parsed.error));
   if (parsed.data.price < 0) return actionError("Price cannot be negative.");
@@ -77,7 +77,7 @@ export async function createProperty(actor: SessionUser, raw: unknown): Promise<
 
 export async function updateProperty(actor: SessionUser, id: string, raw: unknown): Promise<ActionResult<{ id: string }>> {
   if (actor.status !== "ACTIVE") return actionError("Account is not active.");
-  if (actor.role !== "ADMIN" && actor.role !== "MAIN_BROKER") return actionError("Only admins and main brokers can manage properties.");
+  if (actor.role !== "ADMIN" && actor.role !== "MAIN_BROKER") return actionError("Only admins and channel partners can manage properties.");
   const existing = await prisma.property.findUnique({ where: { id } });
   if (!existing) return actionError("Property not found.");
   const parsed = propertyUpdateSchema.safeParse(raw);
@@ -90,10 +90,26 @@ export async function updateProperty(actor: SessionUser, id: string, raw: unknow
 
 export async function setPropertyStatus(actor: SessionUser, id: string, status: PropertyStatus): Promise<ActionResult<{ id: string }>> {
   if (actor.status !== "ACTIVE") return actionError("Account is not active.");
-  if (actor.role !== "ADMIN" && actor.role !== "MAIN_BROKER") return actionError("Only admins and main brokers can manage properties.");
+  if (actor.role !== "ADMIN" && actor.role !== "MAIN_BROKER") return actionError("Only admins and channel partners can manage properties.");
   const existing = await prisma.property.findUnique({ where: { id } });
   if (!existing) return actionError("Property not found.");
   await prisma.property.update({ where: { id }, data: { status } });
   await writeAudit({ actorId: actor.id, action: "PROPERTY_STATUS_CHANGED", targetType: "Property", targetId: id, summary: `${existing.propertyCode}: ${existing.status} -> ${status}` });
   return actionSuccess({ id });
+
+}
+
+export async function activePropertiesForMatching(actor: SessionUser) {
+  if (actor.status !== "ACTIVE") throw new AuthError(403, "Account is not active");
+  requireRoleOf(actor, ["ADMIN", "MAIN_BROKER", "REFERRAL_BROKER"]);
+  return prisma.property.findMany({
+    where: { status: "ACTIVE" },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+    select: {
+      id: true, propertyCode: true, title: true, city: true, locality: true,
+      price: true, listingType: true, type: true, bedrooms: true, bathrooms: true,
+      area: true, areaUnit: true, status: true, updatedAt: true,
+    },
+  });
 }

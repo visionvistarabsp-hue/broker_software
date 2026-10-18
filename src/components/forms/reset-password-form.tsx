@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 
-export function ResetPasswordForm({ phone }: { phone: string }) {
+export function ResetPasswordForm({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
   return (
     <form className="space-y-4" action={(fd) => start(async () => {
-      fd.set("phone", phone);
+      fd.set("email", email);
       const res = await resetConfirmAction(fd);
       if (res.ok) router.push("/login");
       else setError(res.error);

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { KanbanSquare, Users, Building2, AlertTriangle, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { roleLabel } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500 capitalize">{user.role.replaceAll("_", " ").toLowerCase()} overview · all numbers from live data</p>
+          <p className="text-sm text-slate-500">{roleLabel(user.role)} overview · all numbers from live data</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <TrendingUp className="h-4 w-4 text-emerald-600" />

@@ -2,12 +2,12 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "./password";
 import { createSession, validateSession, revokeSession, rotateSession, revokeAllForUser } from "./session";
+import { resetDb } from "@/test/resetDb";
 
-async function makeUser(phone: string) {
+async function makeUser(email: string) {
   return prisma.user.create({
     data: {
-      phoneOriginal: phone,
-      phoneNormalized: phone,
+      email,
       role: "MAIN_BROKER",
       status: "ACTIVE",
       passwordHash: await hashPassword("Str0ngPassw0rd"),
@@ -18,9 +18,8 @@ async function makeUser(phone: string) {
 describe("session", () => {
   let userId: string;
   beforeAll(async () => {
-    await prisma.session.deleteMany();
-    await prisma.user.deleteMany({ where: { phoneNormalized: { startsWith: "+91999" } } });
-    const u = await makeUser("+919990000001");
+    await resetDb();
+    const u = await makeUser("session-user@example.com");
     userId = u.id;
   });
 

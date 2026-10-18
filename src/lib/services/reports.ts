@@ -15,7 +15,7 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(actor: SessionUser): Promise<DashboardStats> {
-  const leadScope = actor.role === "ADMIN" ? {} : { OR: [{ submittedById: actor.id }, { assignedToId: actor.id }] };
+  const leadScope = actor.role === "ADMIN" ? {} : { OR: [{ submittedById: actor.id }, { assignedToId: actor.id }, { collaborators: { some: { brokerId: actor.id } } }] };
   const customerScope =
     actor.role === "ADMIN" ? {} : { OR: [{ createdById: actor.id }, { ownerBrokerId: actor.id }] };
 

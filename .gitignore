@@ -25,6 +25,7 @@ docker-compose.override.yml
 coverage/
 playwright-report/
 test-results/
+.playwright-mcp/
 
 # Prisma
 prisma/*.db
@@ -37,3 +38,4 @@ prisma/*.db
 *.log
 .vercel
 .turbo
+.superpowers/

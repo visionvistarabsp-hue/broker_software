@@ -2,8 +2,14 @@
 
 import { requireUser, requireRole } from "@/lib/authz";
 import { createCustomer } from "@/lib/services/customers";
-import { createProperty, updateProperty, setPropertyStatus } from "@/lib/services/properties";
-import { submitLead, changeLeadStatus, resolveDuplicate } from "@/lib/services/leads";
+import { matchLeadToProperties, type MatchResult } from "@/lib/services/matching";
+import {
+  createProperty,
+  updateProperty,
+  setPropertyStatus,
+  activePropertiesForMatching,
+} from "@/lib/services/properties";
+import { submitLead, changeLeadStatus, resolveDuplicate, getLead } from "@/lib/services/leads";
 import { redirect } from "next/navigation";
 import type { LeadStatus, PropertyStatus } from "@prisma/client";
 
@@ -121,4 +127,45 @@ export async function resolveDuplicateAction(leadId: string, formData: FormData)
   const res = await resolveDuplicate(actor, leadId, decision, form(formData, "reason"));
   if (!res.ok) return;
   redirect("/duplicates");
+
+}
+
+export async function matchLeadAction(leadId: string): Promise<{
+  ok: boolean;
+  matches?: MatchResult[];
+  error?: string;
+}> {
+  const actor = await requireUser();
+  let lead;
+  try {
+    lead = await getLead(actor, leadId);
+  } catch {
+    return { ok: false, error: "Lead not found or you do not have access to it." };
+  }
+  const properties = await activePropertiesForMatching(actor);
+  const matches = matchLeadToProperties(
+    {
+      id: lead.id,
+      budgetMin: lead.budgetMin,
+      budgetMax: lead.budgetMax,
+      preferredLocation: lead.preferredLocation,
+      requirements: lead.requirements,
+      createdAt: lead.createdAt,
+    },
+    properties.map((p) => ({
+      id: p.id,
+      title: p.title,
+      price: p.price,
+      city: p.city,
+      locality: p.locality,
+      type: p.type,
+      listingType: p.listingType,
+      bedrooms: p.bedrooms,
+      bathrooms: p.bathrooms,
+      area: p.area,
+      status: p.status,
+      updatedAt: p.updatedAt,
+    })),
+  );
+  return { ok: true, matches };
 }

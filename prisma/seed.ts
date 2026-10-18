@@ -12,24 +12,23 @@ function code() {
 }
 
 async function main() {
-  const phone = process.env.ADMIN_PHONE ?? "+919999999999";
-  const existing = await prisma.user.findUnique({ where: { phoneNormalized: phone } });
+  const email = process.env.ADMIN_EMAIL ?? "admin@example.com";
+  const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    console.log("Admin already exists:", phone);
+    console.log("Admin already exists:", email);
     return;
   }
   const password = process.env.ADMIN_PASSWORD ?? "ChangeMeStr0ng";
   const passwordHash = await hash(password, { algorithm: 2, memoryCost: 19456, timeCost: 2, parallelism: 1, outputLen: 32 });
   await prisma.user.create({
     data: {
-      phoneOriginal: phone, phoneNormalized: phone,
-      email: process.env.ADMIN_EMAIL ?? "admin@example.com",
-      role: "ADMIN", status: "ACTIVE", phoneVerifiedAt: new Date(), consentAt: new Date(),
+      email,
+      role: "ADMIN", status: "ACTIVE", emailVerifiedAt: new Date(), consentAt: new Date(),
       passwordHash,
       brokerProfile: { create: { brokerCode: code(), fullName: "Administrator" } },
     },
   });
-  console.log("Seeded admin:", phone, "(set ADMIN_PASSWORD in env to change)");
+  console.log("Seeded admin:", email, "(set ADMIN_PASSWORD in env to change)");
 }
 
 main().finally(() => prisma.$disconnect());

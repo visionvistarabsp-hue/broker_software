@@ -1,9 +1,12 @@
 import { requireUser } from "@/lib/authz";
 import { getLead } from "@/lib/services/leads";
+import { listCollaborators } from "@/lib/services/collaboration";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { changeLeadStatusAction } from "@/lib/actions/crm";
+import { LeadMatchPanel } from "@/components/lead-match-panel";
+import { CollaboratorsPanel } from "@/components/collaborators-panel";
 import { LEAD_STATUSES } from "@/lib/validation/crm";
 import { notFound } from "next/navigation";
 
@@ -16,6 +19,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   } catch {
     notFound();
   }
+
+  const collaborators = await listCollaborators(user, id).catch(() => []);
+  const canManage =
+    user.role === "ADMIN" || lead.submittedById === user.id || lead.assignedToId === user.id;
 
   return (
     <div className="space-y-5">
@@ -103,6 +110,19 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           </ol>
         </CardContent>
       </Card>
+
+      <CollaboratorsPanel
+        leadId={lead.id}
+        canManage={canManage}
+        initial={collaborators.map((c) => ({
+          brokerId: c.brokerId,
+          brokerName: c.brokerName,
+          brokerRole: c.brokerRole,
+          role: c.role,
+        }))}
+      />
+
+      <LeadMatchPanel leadId={lead.id} />
     </div>
   );
 }

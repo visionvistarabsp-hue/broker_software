@@ -3,13 +3,14 @@ import { listBrokers } from "@/lib/services/brokers";
 import { approveBrokerAction, suspendBrokerAction, reactivateBrokerAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { roleLabel } from "@/lib/utils";
 
 export default async function AdminBrokersPage() {
   const admin = await requireRole("ADMIN");
   const brokers = await listBrokers(admin);
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Brokers</h1>
+      <h1 className="text-2xl font-semibold">Partners</h1>
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead className="bg-muted text-left">
@@ -20,7 +21,7 @@ export default async function AdminBrokersPage() {
               <tr key={b.id} className="border-t">
                 <td className="p-3">{b.brokerProfile?.fullName ?? "—"}</td>
                 <td className="p-3 font-mono text-xs">{b.brokerProfile?.brokerCode ?? "—"}</td>
-                <td className="p-3">{b.role}</td>
+                <td className="p-3">{roleLabel(b.role)}</td>
                 <td className="p-3"><Badge>{b.status}</Badge></td>
                 <td className="flex gap-2 p-3">
                   {b.status === "PENDING" && (

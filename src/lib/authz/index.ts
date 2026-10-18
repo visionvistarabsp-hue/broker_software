@@ -31,7 +31,13 @@ export function canAccessLead(user: SessionUser, lead: LeadScope): boolean {
 
 export function scopeLeadWhere(user: SessionUser): Record<string, unknown> {
   if (user.role === "ADMIN") return {};
-  return { OR: [{ submittedById: user.id }, { assignedToId: user.id }] };
+  return {
+    OR: [
+      { submittedById: user.id },
+      { assignedToId: user.id },
+      { collaborators: { some: { brokerId: user.id } } },
+    ],
+  };
 }
 
 export function assertSameBrokerOrAdmin(user: SessionUser, ownerId: string | null): void {

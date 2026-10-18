@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { registerAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,20 +20,19 @@ export function RegisterForm() {
       action={(fd) =>
         start(async () => {
           const res = await registerAction(fd);
-          if (res.ok) router.push(`/verify?phone=${encodeURIComponent(res.data.phone)}`);
+          if (res.ok) router.push(`/verify?email=${encodeURIComponent(res.data.email)}`);
           else setError(res.error);
         })
       }
     >
       {error && <Alert className="border-destructive text-destructive">{error}</Alert>}
       <div className="space-y-2"><Label htmlFor="fullName">Full name</Label><Input id="fullName" name="fullName" required /></div>
-      <div className="space-y-2"><Label htmlFor="phone">Phone number</Label><Input id="phone" name="phone" placeholder="+91 98765 43210" required /></div>
-      <div className="space-y-2"><Label htmlFor="email">Email (optional)</Label><Input id="email" name="email" type="email" /></div>
+      <div className="space-y-2"><Label htmlFor="email">Email address</Label><Input id="email" name="email" type="email" placeholder="you@example.com" required /></div>
       <div className="space-y-2">
         <Label htmlFor="role">I am registering as</Label>
         <select id="role" name="role" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-          <option value="MAIN_BROKER">Main Broker</option>
-          <option value="REFERRAL_BROKER">Referral Broker / Partner</option>
+          <option value="MAIN_BROKER">Channel Partner</option>
+          <option value="REFERRAL_BROKER">Referral Partner</option>
         </select>
       </div>
       <label className="flex items-start gap-2 text-sm">
@@ -40,6 +40,12 @@ export function RegisterForm() {
         <span>I consent to the privacy notice and terms, and to being contacted about my account.</span>
       </label>
       <Button type="submit" className="w-full" disabled={pending}>{pending ? "Sending code..." : "Create account"}</Button>
+      <p className="text-center text-sm text-gray-600">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-indigo-600 hover:underline">
+          Sign in
+        </Link>
+      </p>
     </form>
   );
 }

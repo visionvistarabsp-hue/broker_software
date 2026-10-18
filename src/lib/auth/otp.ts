@@ -12,22 +12,22 @@ export function hashOtpCode(code: string): string {
   return createHash("sha256").update(code).digest("hex");
 }
 
-export async function issueOtp(phone: string, purpose: OtpPurpose, userId?: string): Promise<void> {
+export async function issueOtp(email: string, purpose: OtpPurpose, userId?: string): Promise<void> {
   const env = getEnv();
   const code = env.DEV_OTP_CODE && env.NODE_ENV !== "production" ? env.DEV_OTP_CODE : generateOtpCode();
   const expiresAt = new Date(Date.now() + env.OTP_TTL_MINUTES * 60 * 1000);
   await prisma.otpChallenge.create({
-    data: { phone, purpose, userId, codeHash: hashOtpCode(code), expiresAt },
+    data: { email, purpose, userId, codeHash: hashOtpCode(code), expiresAt },
   });
-  await getOtpProvider().send(phone, code);
+  await getOtpProvider().send(email, code);
 }
 
 export type VerifyResult = { ok: true } | { ok: false; reason: "invalid" | "expired" | "attempts" };
 
-export async function verifyOtp(phone: string, purpose: OtpPurpose, code: string): Promise<VerifyResult> {
+export async function verifyOtp(email: string, purpose: OtpPurpose, code: string): Promise<VerifyResult> {
   const env = getEnv();
   const challenge = await prisma.otpChallenge.findFirst({
-    where: { phone, purpose, consumedAt: null },
+    where: { email, purpose, consumedAt: null },
     orderBy: { createdAt: "desc" },
   });
   if (!challenge) return { ok: false, reason: "invalid" };

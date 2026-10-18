@@ -10,11 +10,10 @@ import {
 } from "@/lib/services/auth-flow";
 import { setSessionCookie, clearSessionCookie, readSessionToken } from "@/lib/auth/cookies";
 
-export async function registerAction(formData: FormData): Promise<ActionResult<{ phone: string }>> {
+export async function registerAction(formData: FormData): Promise<ActionResult<{ email: string }>> {
   const parsed = registerSchema.safeParse({
     fullName: formData.get("fullName"),
-    phone: formData.get("phone"),
-    email: formData.get("email") ?? "",
+    email: formData.get("email"),
     role: formData.get("role"),
     consent: formData.get("consent") === "on" || formData.get("consent") === "true",
   });
@@ -24,12 +23,12 @@ export async function registerAction(formData: FormData): Promise<ActionResult<{
 
 export async function verifyOtpAction(formData: FormData): Promise<ActionResult<{ token: string }>> {
   const parsed = verifyOtpSchema.safeParse({
-    phone: formData.get("phone"),
+    email: formData.get("email"),
     purpose: "REGISTER",
     code: formData.get("code"),
   });
   if (!parsed.success) return actionError("Invalid code.", zodFieldErrors(parsed.error));
-  return completeRegistration({ phone: parsed.data.phone, purpose: "REGISTER", code: parsed.data.code });
+  return completeRegistration({ email: parsed.data.email, purpose: "REGISTER", code: parsed.data.code });
 }
 
 export async function setPasswordAction(formData: FormData): Promise<ActionResult<{ ok: true }>> {
@@ -59,15 +58,14 @@ export async function loginAction(formData: FormData): Promise<ActionResult<{ ok
   return { ok: true, data: { ok: true } };
 }
 
-export async function otpLoginAction(formData: FormData): Promise<ActionResult<{ phone: string }>> {
-  const { normalizePhone } = await import("@/lib/services/phone");
-  const phone = normalizePhone(String(formData.get("phone") ?? ""));
-  if (!phone) return actionError("Enter a valid phone number.");
-  return requestLoginOtp(phone);
+export async function otpLoginAction(formData: FormData): Promise<ActionResult<{ email: string }>> {
+  const email = String(formData.get("email") ?? "");
+  if (!email || !email.includes("@")) return actionError("Enter a valid email address.");
+  return requestLoginOtp(email.toLowerCase());
 }
 
-export async function completeOtpLoginAction(phone: string, code: string): Promise<ActionResult<{ ok: true }>> {
-  const res = await completeLoginOtp(phone, code);
+export async function completeOtpLoginAction(email: string, code: string): Promise<ActionResult<{ ok: true }>> {
+  const res = await completeLoginOtp(email.toLowerCase(), code);
   if (!res.ok) return res;
   await setSessionCookie(res.data.token, res.data.expiresAt);
   return { ok: true, data: { ok: true } };
@@ -80,22 +78,21 @@ export async function logoutAction(): Promise<void> {
   redirect("/login");
 }
 
-export async function resetRequestAction(formData: FormData): Promise<ActionResult<{ phone: string }>> {
-  const { normalizePhone } = await import("@/lib/services/phone");
-  const phone = normalizePhone(String(formData.get("phone") ?? ""));
-  if (!phone) return actionError("Enter a valid phone number.");
-  return requestPasswordReset(phone);
+export async function resetRequestAction(formData: FormData): Promise<ActionResult<{ email: string }>> {
+  const email = String(formData.get("email") ?? "");
+  if (!email || !email.includes("@")) return actionError("Enter a valid email address.");
+  return requestPasswordReset(email.toLowerCase());
 }
 
 export async function resetConfirmAction(formData: FormData): Promise<ActionResult<{ ok: true }>> {
   const parsed = resetConfirmSchema.safeParse({
-    phone: formData.get("phone"),
+    email: formData.get("email"),
     code: formData.get("code"),
     password: formData.get("password"),
     confirm: formData.get("confirm"),
   });
   if (!parsed.success) return actionError("Please fix the errors below.", zodFieldErrors(parsed.error));
-  const res = await resetPassword(parsed.data.phone, parsed.data.code, parsed.data.password);
+  const res = await resetPassword(parsed.data.email.toLowerCase(), parsed.data.code, parsed.data.password);
   if (!res.ok) return res;
   return { ok: true, data: { ok: true } };
 }

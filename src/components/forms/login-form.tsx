@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { loginAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,14 @@ export function LoginForm() {
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Signing in..." : "Sign in"}
       </Button>
+      <div className="flex items-center justify-between text-sm">
+        <Link href="/register" className="font-medium text-indigo-600 hover:underline">
+          Create an account
+        </Link>
+        <Link href="/forgot-password" className="text-gray-600 hover:underline">
+          Forgot password?
+        </Link>
+      </div>
     </form>
   );
 }

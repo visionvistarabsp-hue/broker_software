@@ -15,14 +15,13 @@ export const normalizedPhoneField = z
 
 export const registerSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
-  phone: normalizedPhoneField,
-  email: z.union([z.string().email(), z.literal("")]).optional(),
+  email: z.string().email("Enter a valid email address"),
   role: z.enum(["MAIN_BROKER", "REFERRAL_BROKER"]),
   consent: z.literal(true, { errorMap: () => ({ message: "Consent is required" }) }),
 });
 
 export const verifyOtpSchema = z.object({
-  phone: z.string().min(1),
+  email: z.string().email(),
   purpose: z.enum(["REGISTER", "LOGIN", "RESET"]),
   code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
   role: z.enum(["MAIN_BROKER", "REFERRAL_BROKER"]).optional(),
@@ -50,13 +49,13 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const otpLoginRequestSchema = z.object({ phone: normalizedPhoneField });
+export const otpLoginRequestSchema = z.object({ email: z.string().email() });
 
-export const resetRequestSchema = z.object({ phone: normalizedPhoneField });
+export const resetRequestSchema = z.object({ email: z.string().email() });
 
 export const resetConfirmSchema = withPasswordRules(
   passwordObject.omit({ token: true }).extend({
-    phone: z.string().min(1),
+    email: z.string().email(),
     code: z.string().regex(/^\d{6}$/),
   })
 );

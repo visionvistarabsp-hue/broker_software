@@ -6,7 +6,7 @@ Status: Approved (design phase)
 ## 1. Purpose
 
 A web-based, mobile-friendly real estate lead and referral management platform with
-three roles: Admin, Main Broker, and Referral Broker / Referral Partner. It manages
+three roles: Admin, Channel Partner, and Referral Partner. It manages
 broker registration, customer referrals, property listings, duplicate detection, lead
 follow-ups, site visits, deal progress, referral attribution, reports, and broker
 performance.
@@ -51,7 +51,7 @@ Single Next.js App Router application deployed on Vercel (Node runtime — requi
 Argon2id and Prisma). Internal layering:
 
 - `src/app/(auth)` — login, register, OTP, password-reset pages.
-- `src/app/(app)/...` — role-guarded dashboards (admin, main broker, referral broker).
+- `src/app/(app)/...` — role-guarded dashboards (admin, channel partner, referral partner).
 - `src/app/api/...` — route handlers: CSV export/import, file upload, cron, health.
 - `src/lib/db` — Prisma client singleton.
 - `src/lib/auth` — session create/validate/rotate, Argon2id, OTP challenge service.
@@ -159,10 +159,10 @@ caller.
 
 - Admin: full access — brokers, customers, leads, properties, duplicate reviews,
   follow-ups, reports, settings, audit; approve/suspend/reactivate/deactivate.
-- Main Broker: own leads + leads explicitly assigned; own customers; submit leads;
+- Channel Partner: own leads + leads explicitly assigned; own customers; submit leads;
   select active properties; notes; follow-ups; site visits; own reports; own exports;
   profile/password. No access to other brokers' private customer records.
-- Referral Broker: own referrals and statuses only; submit name + phone (+ optional
+- Referral Partner: own referrals and statuses only; submit name + phone (+ optional
   details); own referral performance; in-app notifications. Cannot see other brokers'
   leads, private contact data, internal notes, admin-only duplicate evidence, or
   commission information.

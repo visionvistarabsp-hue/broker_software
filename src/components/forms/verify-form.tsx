@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 
-export function VerifyForm({ phone }: { phone: string }) {
+export function VerifyForm({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -18,7 +18,7 @@ export function VerifyForm({ phone }: { phone: string }) {
       className="space-y-4"
       action={(fd) =>
         start(async () => {
-          fd.set("phone", phone);
+          fd.set("email", email);
           const res = await verifyOtpAction(fd);
           if (res.ok) router.push(`/set-password?token=${encodeURIComponent(res.data.token)}`);
           else setError(res.error);
@@ -26,7 +26,7 @@ export function VerifyForm({ phone }: { phone: string }) {
       }
     >
       {error && <Alert className="border-destructive text-destructive">{error}</Alert>}
-      <p className="text-sm text-muted-foreground">We sent a 6-digit code to {phone}.</p>
+      <p className="text-sm text-muted-foreground">We sent a 6-digit code to {email}.</p>
       <div className="space-y-2"><Label htmlFor="code">Verification code</Label><Input id="code" name="code" inputMode="numeric" maxLength={6} required /></div>
       <Button type="submit" className="w-full" disabled={pending}>{pending ? "Verifying..." : "Verify"}</Button>
     </form>

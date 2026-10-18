@@ -2,19 +2,19 @@ import { describe, it, expect } from "vitest";
 import { registerSchema, setPasswordSchema, loginSchema } from "./auth";
 
 describe("validation", () => {
-  it("registerSchema normalizes phone and requires consent", () => {
+  it("registerSchema accepts an email and requires consent", () => {
     const r = registerSchema.safeParse({
       fullName: "Asha Rao",
-      phone: "+91 98765 43210",
+      email: "asha@example.com",
       role: "REFERRAL_BROKER",
       consent: true,
     });
     expect(r.success).toBe(true);
-    if (r.success) expect(r.data.phone).toBe("+919876543210");
+    if (r.success) expect(r.data.email).toBe("asha@example.com");
   });
 
   it("registerSchema rejects missing consent", () => {
-    const r = registerSchema.safeParse({ fullName: "A", phone: "9876543210", role: "MAIN_BROKER", consent: false });
+    const r = registerSchema.safeParse({ fullName: "A", email: "a@example.com", role: "MAIN_BROKER", consent: false });
     expect(r.success).toBe(false);
   });
 

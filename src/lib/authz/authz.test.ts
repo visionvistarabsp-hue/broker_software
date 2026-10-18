@@ -19,16 +19,22 @@ describe("canAccessLead", () => {
   it("other broker cannot access", () => expect(canAccessLead(brokerB, lead)).toBe(false));
   it("assigned broker can access", () =>
     expect(canAccessLead(brokerB, { ...lead, assignedToId: "b2" })).toBe(true));
-  it("referral broker cannot access others' lead (owner is a main broker)", () =>
+  it("referral partner cannot access others' lead (owner is a channel partner)", () =>
     expect(canAccessLead(referrer, lead)).toBe(false));
-  it("referral broker can access own referral", () =>
+  it("referral partner can access own referral", () =>
     expect(canAccessLead(referrer, { ...lead, submittedById: "r1" })).toBe(true));
 });
 
 describe("scopeLeadWhere", () => {
   it("admin has no scoping filter", () => expect(scopeLeadWhere(admin)).toEqual({}));
-  it("broker scopes to own or assigned", () =>
-    expect(scopeLeadWhere(brokerB)).toEqual({ OR: [{ submittedById: "b2" }, { assignedToId: "b2" }] }));
+  it("broker scopes to own, assigned or collaborated", () =>
+    expect(scopeLeadWhere(brokerB)).toEqual({
+      OR: [
+        { submittedById: "b2" },
+        { assignedToId: "b2" },
+        { collaborators: { some: { brokerId: "b2" } } },
+      ],
+    }));
 });
 
 describe("requireRoleOf", () => {

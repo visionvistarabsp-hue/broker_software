@@ -70,7 +70,7 @@ export async function createCustomer(
 ): Promise<ActionResult<{ id: string; customerCode: string; duplicate: boolean }>> {
   if (actor.status !== "ACTIVE") return actionError("Account is not active.");
   if (actor.role !== "ADMIN" && actor.role !== "MAIN_BROKER") {
-    return actionError("Only admins and main brokers can add customers.");
+    return actionError("Only admins and channel partners can add customers.");
   }
   const parsed = customerSchema.safeParse(raw);
   if (!parsed.success) return actionError("Please fix the errors below.", zodFieldErrors(parsed.error));

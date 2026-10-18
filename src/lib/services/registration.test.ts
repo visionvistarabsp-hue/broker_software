@@ -8,14 +8,15 @@ import {
   finalizePassword,
   consumePasswordSetupToken,
 } from "./registration";
+import { resetDb } from "@/test/resetDb";
 
-const PHONE = "+919990000003";
+const EMAIL = "test@example.com";
 
 const hashOf = (t: string) => createHash("sha256").update(t).digest("hex");
 
 async function seedSetupToken(opts?: { expired?: boolean }) {
   const user = await prisma.user.create({
-    data: { phoneOriginal: PHONE, phoneNormalized: PHONE, role: "REFERRAL_BROKER", status: "PENDING" },
+    data: { email: EMAIL, role: "REFERRAL_BROKER", status: "PENDING" },
   });
   const raw = "a".repeat(64);
   await prisma.passwordSetupToken.create({
@@ -30,32 +31,27 @@ async function seedSetupToken(opts?: { expired?: boolean }) {
 
 describe("registration", () => {
   beforeEach(async () => {
-    await prisma.pendingRegistration.deleteMany({ where: { phone: PHONE } });
-    await prisma.otpChallenge.deleteMany({ where: { phone: PHONE } });
-    await prisma.passwordSetupToken.deleteMany({ where: { user: { phoneNormalized: PHONE } } });
-    await prisma.session.deleteMany({ where: { user: { phoneNormalized: PHONE } } });
-    await prisma.brokerProfile.deleteMany({ where: { user: { phoneNormalized: PHONE } } });
-    await prisma.user.deleteMany({ where: { phoneNormalized: PHONE } });
+    await resetDb();
   });
 
   it("starts registration and stores pending row", async () => {
     process.env.DEV_OTP_CODE = "222333";
     const res = await startRegistration({
-      fullName: "Asha Rao", phone: PHONE, role: "REFERRAL_BROKER", consent: true, email: "",
+      fullName: "Asha Rao", email: EMAIL, role: "REFERRAL_BROKER", consent: true,
     });
     expect(res.ok).toBe(true);
-    const pending = await prisma.pendingRegistration.findUnique({ where: { phone: PHONE } });
+    const pending = await prisma.pendingRegistration.findUnique({ where: { email: EMAIL } });
     expect(pending?.role).toBe("REFERRAL_BROKER");
   });
 
   it("completes registration with valid OTP and assigns a broker code", async () => {
     await prisma.pendingRegistration.create({
-      data: { phone: PHONE, fullName: "Asha Rao", role: "REFERRAL_BROKER", consentAt: new Date(), expiresAt: new Date(Date.now() + 60000) },
+      data: { email: EMAIL, fullName: "Asha Rao", role: "REFERRAL_BROKER", consentAt: new Date(), expiresAt: new Date(Date.now() + 60000) },
     });
     await prisma.otpChallenge.create({
-      data: { phone: PHONE, purpose: "REGISTER", codeHash: hashOtpCode("222333"), expiresAt: new Date(Date.now() + 60000) },
+      data: { email: EMAIL, purpose: "REGISTER", codeHash: hashOtpCode("222333"), expiresAt: new Date(Date.now() + 60000) },
     });
-    const res = await completeRegistration({ phone: PHONE, purpose: "REGISTER", code: "222333" });
+    const res = await completeRegistration({ email: EMAIL, purpose: "REGISTER", code: "222333" });
     expect(res.ok).toBe(true);
     if (!res.ok) return;
     const tokenHash = hashOf(res.data.token);
@@ -64,23 +60,23 @@ describe("registration", () => {
     const user = await prisma.user.findUnique({ where: { id: setup!.userId }, include: { brokerProfile: true } });
     expect(user?.status).toBe("PENDING");
     expect(user?.brokerProfile?.brokerCode).toHaveLength(10);
-    expect(await prisma.pendingRegistration.findUnique({ where: { phone: PHONE } })).toBeNull();
+    expect(await prisma.pendingRegistration.findUnique({ where: { email: EMAIL } })).toBeNull();
   });
 
   it("rejects an invalid OTP", async () => {
     await prisma.pendingRegistration.create({
-      data: { phone: PHONE, fullName: "Asha Rao", role: "REFERRAL_BROKER", consentAt: new Date(), expiresAt: new Date(Date.now() + 60000) },
+      data: { email: EMAIL, fullName: "Asha Rao", role: "REFERRAL_BROKER", consentAt: new Date(), expiresAt: new Date(Date.now() + 60000) },
     });
     await prisma.otpChallenge.create({
-      data: { phone: PHONE, purpose: "REGISTER", codeHash: hashOtpCode("222333"), expiresAt: new Date(Date.now() + 60000) },
+      data: { email: EMAIL, purpose: "REGISTER", codeHash: hashOtpCode("222333"), expiresAt: new Date(Date.now() + 60000) },
     });
-    const res = await completeRegistration({ phone: PHONE, purpose: "REGISTER", code: "999999" });
+    const res = await completeRegistration({ email: EMAIL, purpose: "REGISTER", code: "999999" });
     expect(res.ok).toBe(false);
   });
 
   it("finalizes password and returns a session", async () => {
     const u = await prisma.user.create({
-      data: { phoneOriginal: PHONE, phoneNormalized: PHONE, role: "REFERRAL_BROKER", status: "PENDING" },
+      data: { email: EMAIL, role: "REFERRAL_BROKER", status: "PENDING" },
     });
     const res = await finalizePassword(u.id, "Str0ngPassw0rd");
     expect(res.ok).toBe(true);

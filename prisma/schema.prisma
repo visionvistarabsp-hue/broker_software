@@ -27,32 +27,42 @@ enum OtpPurpose {
 }
 
 model User {
-  id              String        @id @default(cuid())
-  email           String?       @unique
-  phoneOriginal   String
-  phoneNormalized String        @unique
+  id              String     @id @default(cuid())
+  email           String?    @unique
+  
   passwordHash    String?
   role            Role
-  status          UserStatus    @default(PENDING)
-  phoneVerifiedAt DateTime?
+  status          UserStatus @default(PENDING)
   emailVerifiedAt DateTime?
   consentAt       DateTime?
   lastLoginAt     DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  brokerProfile  BrokerProfile?
-  sessions       Session[]
-  otpChallenges  OtpChallenge[]
+  brokerProfile       BrokerProfile?
+  sessions            Session[]
+  otpChallenges       OtpChallenge[]
   passwordSetupTokens PasswordSetupToken[]
-  ownedCustomers Customer[] @relation("OwnedCustomers")
-  createdCustomers Customer[] @relation("CreatedCustomers")
-  submittedLeads Lead[] @relation("SubmittedLeads")
-  assignedLeads Lead[] @relation("AssignedLeads")
-  statusChanges LeadStatusHistory[] @relation("StatusChangedBy")
-  decidedDuplicates DuplicateReview[] @relation("DecidedDuplicates")
-  createdProperties Property[] @relation("CreatedProperties")
-  auditLogs AuditLog[] @relation("AuditActor")
+  ownedCustomers      Customer[]           @relation("OwnedCustomers")
+  createdCustomers    Customer[]           @relation("CreatedCustomers")
+  submittedLeads      Lead[]               @relation("SubmittedLeads")
+  assignedLeads       Lead[]               @relation("AssignedLeads")
+  statusChanges       LeadStatusHistory[]  @relation("StatusChangedBy")
+  decidedDuplicates   DuplicateReview[]    @relation("DecidedDuplicates")
+  createdProperties   Property[]           @relation("CreatedProperties")
+  auditLogs           AuditLog[]           @relation("AuditActor")
+  assignedFollowUps   FollowUp[]           @relation("AssignedFollowUps")
+  createdFollowUps    FollowUp[]           @relation("CreatedFollowUps")
+  createdSiteVisits   SiteVisit[]          @relation("CreatedSiteVisits")
+  notifications       Notification[]
+  payoutsAsPayee      Payout[]             @relation("PayoutPayee")
+  decidedPayouts      Payout[]             @relation("PayoutDecider")
+  collaborations      DealCollaborator[]   @relation("Collaborations")
+  addedCollaborators  DealCollaborator[]   @relation("AddedCollaborators")
+  propertyDocuments   PropertyDocument[]   @relation("PropertyDocument")
+  commissionRules     CommissionRule[]     @relation("CommissionRule")
+  commissions         Commission[]         @relation("Commission")
+  payoutHistory       PayoutHistory[]      @relation("PayoutHistory")
 
   @@index([role, status])
 }
@@ -85,15 +95,15 @@ model BrokerProfile {
 }
 
 model Session {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   userId        String
-  tokenHash     String   @unique
+  tokenHash     String    @unique
   expiresAt     DateTime
   revokedAt     DateTime?
   rotatedFromId String?
   ip            String?
   userAgent     String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -104,7 +114,7 @@ model Session {
 model OtpChallenge {
   id           String     @id @default(cuid())
   userId       String?
-  phone        String
+  email        String
   purpose      OtpPurpose
   codeHash     String
   expiresAt    DateTime
@@ -114,19 +124,18 @@ model OtpChallenge {
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([phone, purpose])
+  @@index([email, purpose])
   @@index([expiresAt])
 }
 
 model PendingRegistration {
-  id          String   @id @default(cuid())
-  phone       String   @unique
-  fullName    String
-  email       String?
-  role        Role
-  consentAt   DateTime
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  email     String   @unique
+  fullName  String
+  role      Role
+  consentAt DateTime
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@index([expiresAt])
 }
@@ -182,8 +191,8 @@ enum PropertyStatus {
 }
 
 model Customer {
-  id              String   @id @default(cuid())
-  customerCode    String   @unique
+  id              String    @id @default(cuid())
+  customerCode    String    @unique
   fullName        String
   phoneOriginal   String
   phoneNormalized String
@@ -191,12 +200,12 @@ model Customer {
   address         String?
   city            String?
   ownerBrokerId   String?
-  ownerBroker     User?    @relation("OwnedCustomers", fields: [ownerBrokerId], references: [id], onDelete: SetNull)
+  ownerBroker     User?     @relation("OwnedCustomers", fields: [ownerBrokerId], references: [id], onDelete: SetNull)
   createdById     String
-  createdBy       User     @relation("CreatedCustomers", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy       User      @relation("CreatedCustomers", fields: [createdById], references: [id], onDelete: Restrict)
   consentAt       DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   leads               Lead[]
   duplicateCandidates DuplicateReview[] @relation("CandidateCustomer")
@@ -233,7 +242,9 @@ model Property {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
-  leads Lead[]
+  leads      Lead[]
+  siteVisits SiteVisit[]
+  documents  PropertyDocument[]
 
   @@index([status])
   @@index([city])
@@ -268,6 +279,11 @@ model Lead {
 
   history         LeadStatusHistory[]
   duplicateReview DuplicateReview?
+  followUps       FollowUp[]
+  siteVisits      SiteVisit[]
+  notifications   Notification[]
+  commission      Commission?
+  collaborators   DealCollaborator[]
 
   @@index([customerId])
   @@index([submittedById])
@@ -277,15 +293,15 @@ model Lead {
 }
 
 model LeadStatusHistory {
-  id          String     @id @default(cuid())
+  id          String      @id @default(cuid())
   leadId      String
-  lead        Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead        Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   fromStatus  LeadStatus?
   toStatus    LeadStatus
   changedById String
-  changedBy   User       @relation("StatusChangedBy", fields: [changedById], references: [id], onDelete: Restrict)
+  changedBy   User        @relation("StatusChangedBy", fields: [changedById], references: [id], onDelete: Restrict)
   reason      String?
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime    @default(now())
 
   @@index([leadId])
 }
@@ -322,4 +338,200 @@ model AuditLog {
   @@index([actorId])
   @@index([targetType, targetId])
   @@index([createdAt])
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum SiteVisitStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  FOLLOWUP_DUE
+  FOLLOWUP_OVERDUE
+  LEAD_STATUS
+  DUPLICATE
+  ASSIGNMENT
+  SYSTEM
+}
+
+enum DocStatus {
+  PENDING
+  COMPLETED
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+model FollowUp {
+  id                String         @id @default(cuid())
+  leadId            String
+  lead              Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  dueAt             DateTime
+  priority          LeadPriority   @default(MEDIUM)
+  assignedToId      String?
+  assignedTo        User?          @relation("AssignedFollowUps", fields: [assignedToId], references: [id], onDelete: SetNull)
+  status            FollowUpStatus @default(PENDING)
+  completedAt       DateTime?
+  completionNotes   String?
+  rescheduleHistory Json           @default("[]")
+  createdById       String
+  createdBy         User           @relation("CreatedFollowUps", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([leadId])
+  @@index([dueAt])
+  @@index([status])
+  @@index([assignedToId])
+}
+
+model SiteVisit {
+  id          String          @id @default(cuid())
+  leadId      String
+  lead        Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId  String?
+  property    Property?       @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  scheduledAt DateTime
+  status      SiteVisitStatus @default(SCHEDULED)
+  notes       String?
+  createdById String
+  createdBy   User            @relation("CreatedSiteVisits", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([leadId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String?
+  leadId    String?
+  lead      Lead?            @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  readAt    DateTime?
+  dedupeKey String?          @unique
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+}
+
+model PropertyDocument {
+  id          String    @id @default(cuid())
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  label       String
+  status      DocStatus @default(PENDING)
+  notes       String?
+  fileKey     String?
+  createdById String
+  createdBy   User      @relation("PropertyDocument", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([propertyId])
+}
+
+model CommissionRule {
+  id                 String       @id @default(cuid())
+  name               String
+  percentBasisPoints Int
+  appliesTo          ListingType?
+  minAmount          Int?
+  maxAmount          Int?
+  active             Boolean      @default(true)
+  createdById        String
+  createdBy          User         @relation("CommissionRule", fields: [createdById], references: [id], onDelete: Restrict)
+  commissions        Commission[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}
+
+model Commission {
+  id                 String          @id @default(cuid())
+  leadId             String          @unique
+  lead               Lead            @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  dealAmount         Int
+  ruleId             String?
+  rule               CommissionRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  percentBasisPoints Int
+  computedAmount     Int
+  createdById        String
+  createdBy          User            @relation("Commission", fields: [createdById], references: [id], onDelete: Restrict)
+  payouts            Payout[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([leadId])
+}
+
+model Payout {
+  id               String          @id @default(cuid())
+  commissionId     String
+  commission       Commission      @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+  payeeBrokerId    String
+  payeeBroker      User            @relation("PayoutPayee", fields: [payeeBrokerId], references: [id], onDelete: Restrict)
+  shareBasisPoints Int
+  amount           Int
+  status           PayoutStatus    @default(PENDING)
+  reason           String?
+  decidedById      String?
+  decidedBy        User?           @relation("PayoutDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt        DateTime?
+  history          PayoutHistory[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([commissionId])
+  @@index([payeeBrokerId])
+  @@index([status])
+}
+
+model PayoutHistory {
+  id          String        @id @default(cuid())
+  payoutId    String
+  payout      Payout        @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  fromStatus  PayoutStatus?
+  toStatus    PayoutStatus
+  changedById String
+  changedBy   User          @relation("PayoutHistory", fields: [changedById], references: [id], onDelete: Restrict)
+  reason      String?
+  createdAt   DateTime      @default(now())
+
+  @@index([payoutId])
+}
+
+model DealCollaborator {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  brokerId  String
+  broker    User     @relation("Collaborations", fields: [brokerId], references: [id], onDelete: Cascade)
+  role      String   @default("CO_BROKER")
+  addedById String
+  addedBy   User     @relation("AddedCollaborators", fields: [addedById], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+
+  @@unique([leadId, brokerId])
+  @@index([leadId])
+  @@index([brokerId])
 }

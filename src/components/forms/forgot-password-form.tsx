@@ -15,11 +15,11 @@ export function ForgotPasswordForm() {
   return (
     <form className="space-y-4" action={(fd) => start(async () => {
       const res = await resetRequestAction(fd);
-      if (res.ok) router.push(`/reset-password?phone=${encodeURIComponent(res.data.phone)}`);
+      if (res.ok) router.push(`/reset-password?email=${encodeURIComponent(res.data.email)}`);
       else setError(res.error);
     })}>
       {error && <Alert className="border-destructive text-destructive">{error}</Alert>}
-      <div className="space-y-2"><Label htmlFor="phone">Phone number</Label><Input id="phone" name="phone" required /></div>
+      <div className="space-y-2"><Label htmlFor="email">Email address</Label><Input id="email" name="email" type="email" placeholder="you@example.com" required /></div>
       <Button type="submit" className="w-full" disabled={pending}>{pending ? "Sending..." : "Send reset code"}</Button>
     </form>
   );
