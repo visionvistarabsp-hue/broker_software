@@ -26,7 +26,7 @@ export function NotificationsBell({ initialUnread, recent }: { initialUnread: nu
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-900 truncate">{n.title}</p>
                 {n.body && <p className="text-xs text-slate-500 line-clamp-2">{n.body}</p>}
-                <p className="text-[11px] text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: true })}</p>
+                <p className="text-[11px] text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: true })}</p>
               </div>
               <form action={markReadAction.bind(null, n.id)}><button type="submit" className="text-xs text-indigo-600 hover:underline shrink-0">Read</button></form>
             </div>))}
