@@ -15,6 +15,14 @@ async function main() {
   const email = process.env.ADMIN_EMAIL ?? "admin@example.com";
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
+    if (existing.role !== "ADMIN") {
+      console.error(
+        `SEED ERROR: ${email} exists with role ${existing.role}, not ADMIN. ` +
+          `Change ADMIN_EMAIL in .env to an unused email and re-run. ` +
+          `Do NOT overwrite this user — it belongs to a real account.`
+      );
+      process.exit(1);
+    }
     console.log("Admin already exists:", email);
     return;
   }
